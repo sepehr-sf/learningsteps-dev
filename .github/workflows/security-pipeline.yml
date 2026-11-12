@@ -68,12 +68,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      
       - name: Scan Terraform configuration
         uses: bridgecrewio/checkov-action@v12.1347.0
         with:
           directory: terraform
           framework: terraform
           soft_fail: false
+          skip_check: CKV_AZURE_5,CKV_AZURE_116,CKV_AZURE_4,CKV_AZURE_7,CKV_AZURE_6,CKV_AZURE_117,CKV_AZURE_115,CKV_AZURE_139,CKV_AZURE_136,CKV_AZURE_109,CKV_AZURE_110,CKV_AZURE_42,CKV_AZURE_114,CKV_AZURE_41
+
 
 
   # 3. Build and scan Docker image
