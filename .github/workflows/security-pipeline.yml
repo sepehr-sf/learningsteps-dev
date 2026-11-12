@@ -108,7 +108,7 @@ jobs:
           ignore-unfixed: true
           vuln-type: os,library
           severity: CRITICAL,HIGH
-          skip-ids: CVE-2026-76844,CVE-2026-85091
+          trivyignores: .trivyignore
 
       - name: Save scanned Docker image
         run: |
