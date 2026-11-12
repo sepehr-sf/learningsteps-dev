@@ -147,3 +147,59 @@ jobs:
 
           docker push "$IMAGE:${GITHUB_SHA}"
           docker push "$IMAGE:latest"
+
+  # 5. Deploy the verified image to AKS
+  deploy-to-aks:
+    name: Deploy to AKS
+    runs-on: ubuntu-latest
+
+    needs:
+      - publish-to-acr
+
+    if: github.ref == 'refs/heads/reference' && github.event_name != 'pull_request'
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Authenticate with Azure using OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install kubelogin
+        uses: azure/use-kubelogin@v1
+        with:
+          kubelogin-version: 'v0.2.22'
+
+      - name: Connect to AKS
+        uses: azure/aks-set-context@v5
+        with:
+          resource-group: rg-learningsteps-dev
+          cluster-name: aks-learningsteps-dev
+          admin: 'false'
+          use-kubelogin: 'true'
+
+      - name: Deploy new API image
+        run: |
+          IMAGE="learningstepsacr2026.azurecr.io/learningsteps-api:${GITHUB_SHA}"
+
+          kubectl set image deployment/learningsteps-api \
+            api="$IMAGE" \
+            --namespace learningsteps
+
+      - name: Verify deployment rollout
+        run: |
+          kubectl rollout status deployment/learningsteps-api \
+            --namespace learningsteps \
+            --timeout=180s
+
+      - name: Verify deployed image
+        run: |
+          kubectl get deployment learningsteps-api \
+            --namespace learningsteps \
+            -o jsonpath='{.spec.template.spec.containers[?(@.name=="api")].image}'
+          echo ""
