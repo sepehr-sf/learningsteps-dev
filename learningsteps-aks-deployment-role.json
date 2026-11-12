@@ -1,0 +1,19 @@
+﻿{
+  "Name": "LearningSteps AKS Deployment Operator",
+  "IsCustom": true,
+  "Description": "Allows GitHub Actions to update the LearningSteps API deployment and inspect rollout status without accessing Kubernetes secrets.",
+  "Actions": [],
+  "NotActions": [],
+  "DataActions": [
+    "Microsoft.ContainerService/managedClusters/apps/deployments/read",
+    "Microsoft.ContainerService/managedClusters/apps/deployments/write",
+    "Microsoft.ContainerService/managedClusters/apps/replicasets/read",
+    "Microsoft.ContainerService/managedClusters/pods/read",
+    "Microsoft.ContainerService/managedClusters/events/read",
+    "Microsoft.ContainerService/managedClusters/events.k8s.io/events/read"
+  ],
+  "NotDataActions": [],
+  "AssignableScopes": [
+    "/subscriptions/0a800b44-8d19-4b08-ac0f-5d9c5ce2dcad"
+  ]
+}

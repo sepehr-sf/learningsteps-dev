@@ -121,6 +121,12 @@ resource "kubernetes_deployment_v1" "api" {
   depends_on = [
     kubernetes_manifest.postgres_secret_provider
   ]
+
+  lifecycle {
+  ignore_changes = [
+    spec[0].template[0].spec[0].container[0].image
+  ]
+}
 }
 # Expose the LearningSteps API inside the cluster/Loadbalancer
 resource "kubernetes_service_v1" "api" {
