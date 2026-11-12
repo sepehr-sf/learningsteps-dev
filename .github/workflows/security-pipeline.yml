@@ -26,6 +26,23 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+          
+      - name: Debug Git history
+        run: |
+          echo "Current branch:"
+          git branch --show-current
+
+          echo "Current commit:"
+          git rev-parse HEAD
+
+          echo "Previous commit:"
+          git rev-parse HEAD^
+
+          echo "Recent commits:"
+          git log -5 --oneline
+
+          echo "Repository status:"
+          git status
 
       - name: Scan pull request commits
         if: github.event_name == 'pull_request'
