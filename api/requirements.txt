@@ -8,3 +8,4 @@ asyncpg
 pytest
 httpx
 ruff
+prometheus-client
