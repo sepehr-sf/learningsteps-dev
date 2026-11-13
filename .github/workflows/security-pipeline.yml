@@ -105,6 +105,7 @@ jobs:
       - secret-scanning
       - terraform-security
       - python-lint
+      - python-tests
 
     steps:
       - name: Checkout repository
@@ -140,7 +141,44 @@ jobs:
           name: learningsteps-api-image
           path: learningsteps-api.tar
           retention-days: 1
+  # Run real FastAPI integration tests against an isolated PostgreSQL database.
+  # This database exists only during this GitHub Actions job.
+  python-tests:
+    name: Python Integration Tests
+    runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: learningsteps_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d learningsteps_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r api/requirements.txt
+
+      - name: Run integration tests
+        run: pytest
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/learningsteps_test
+          PYTHONPATH: api
 
   # 4. Publish scanned image to Azure Container Registry
   publish-to-acr:
