@@ -1,10 +1,14 @@
+import asyncio
 import logging
 import time
+from contextlib import asynccontextmanager
 
+import asyncpg
 from dotenv import load_dotenv
 from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
-from prometheus_client import Counter, Histogram, make_asgi_app
+from fastapi.responses import JSONResponse, RedirectResponse
+from prometheus_client import Counter, Gauge, Histogram, make_asgi_app
+from repositories.postgres_repository import DATABASE_URL
 from routers.journal_router import router as journal_router
 from starlette.requests import Request
 
@@ -34,7 +38,53 @@ REQUEST_LATENCY = Histogram(
     ["method", "endpoint"]
 )
 
-app = FastAPI(title="LearningSteps API 🚀", description="A simple learning journal API for tracking daily work, struggles, and intentions")
+DATABASE_UP = Gauge(
+    "learningsteps_database_up",
+    "PostgreSQL database connectivity status"
+)
+
+async def monitor_database():
+    while True:
+        connection = None
+
+        try:
+            connection = await asyncpg.connect(
+                DATABASE_URL,
+                timeout=5
+            )
+            await connection.fetchval("SELECT 1")
+
+            DATABASE_UP.set(1)
+
+        except Exception:
+            DATABASE_UP.set(0)
+            logger.exception("Database monitoring check failed")
+
+        finally:
+            if connection is not None:
+                await connection.close()
+
+        await asyncio.sleep(30)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = asyncio.create_task(monitor_database())
+
+    yield
+
+    task.cancel()
+
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
+
+app = FastAPI(
+    title="LearningSteps API 🚀",
+    description="A simple learning journal API for tracking daily work, struggles, and intentions",
+    lifespan=lifespan
+)
 # Expose Prometheus metrics
 app.mount("/metrics", make_asgi_app())
 
@@ -44,6 +94,33 @@ app.include_router(journal_router)
 @app.get("/health", include_in_schema=False)
 def health():
     return {"status": "healthy"}
+
+
+# Database health-check endpoint.
+@app.get("/health/database", include_in_schema=False)
+async def database_health():
+    connection = None
+
+    try:
+        connection = await asyncpg.connect(DATABASE_URL)
+        await connection.fetchval("SELECT 1")
+
+        DATABASE_UP.set(1)
+
+        return {"database": "healthy"}
+
+    except Exception:
+        DATABASE_UP.set(0)
+        logger.exception("Database health check failed")
+
+        return JSONResponse(
+            status_code=503,
+            content={"database": "unhealthy"}
+        )
+
+    finally:
+        if connection is not None:
+            await connection.close()
 
 @app.get("/", include_in_schema=False)
 def root():
