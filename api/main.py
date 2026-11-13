@@ -1,8 +1,9 @@
+import logging
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
-from dotenv import load_dotenv
 from routers.journal_router import router as journal_router
-import logging
 
 load_dotenv()
 

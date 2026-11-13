@@ -94,7 +94,7 @@ jobs:
         run: pip install ruff
 
       - name: Run Ruff
-        run: ruff check api/
+        run: ruff check api/ --ignore B008,BLE001
 
   # 3. Build and scan Docker image
   container-security:

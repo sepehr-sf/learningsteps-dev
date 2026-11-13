@@ -1,10 +1,9 @@
-import logging
-from typing import AsyncGenerator
-from fastapi import APIRouter, HTTPException, Request, Depends
+from collections.abc import AsyncGenerator
+
+from fastapi import APIRouter, Depends, HTTPException, Request
+from models.entry import Entry, EntryCreate
 from repositories.postgres_repository import PostgresDB
 from services.entry_service import EntryService
-from models.entry import Entry, EntryCreate
-
 
 router = APIRouter()
 
@@ -38,7 +37,7 @@ async def create_entry(entry_data: EntryCreate, entry_service: EntryService = De
             "entry": created_entry
         }
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error creating entry: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Error creating entry: {e!s}")
 
 # Implements GET /entries endpoint to list all journal entries
 # Example response: [{"id": "123", "work": "...", "struggle": "...", "intention": "..."}]

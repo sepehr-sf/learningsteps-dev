@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field, field_validator
-from typing import Optional
 from datetime import datetime
 from uuid import uuid4
+
+from pydantic import BaseModel, Field, field_validator
+
 
 class EntryCreate(BaseModel):
     """Model for creating a new journal entry (user input)."""
@@ -59,11 +60,11 @@ class Entry(BaseModel):
         max_length=256,
         description="What will you study/work on tomorrow?"
     )
-    created_at: Optional[datetime] = Field(
+    created_at: datetime | None = Field(
         default_factory=datetime.utcnow,
         description="Timestamp when the entry was created."
     )
-    updated_at: Optional[datetime] = Field(
+    updated_at: datetime | None = Field(
         default_factory=datetime.utcnow,
         description="Timestamp when the entry was last updated."
     )
