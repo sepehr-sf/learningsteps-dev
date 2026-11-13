@@ -1,4 +1,4 @@
-
+﻿
 name: LearningSteps DevSecOps Pipeline
 
 on:
@@ -68,7 +68,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      
+
       - name: Scan Terraform configuration
         uses: bridgecrewio/checkov-action@v12.1347.0
         with:
@@ -239,7 +239,13 @@ jobs:
       contents: read
       id-token: write
 
+
     steps:
+      # Download the repository so Kubernetes manifests are available.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Authenticate with Azure using OpenID Connect.
       - name: Authenticate with Azure using OIDC
         uses: azure/login@v2
         with:
@@ -247,6 +253,7 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      # Install the Kubernetes authentication plugin.
       - name: Install kubelogin
         uses: azure/use-kubelogin@v1
         with:
@@ -260,23 +267,51 @@ jobs:
           admin: 'false'
           use-kubelogin: 'true'
 
-      - name: Deploy new API image
+      # Configure the Azure Key Vault integration before creating application pods.
+      - name: Apply Azure Key Vault SecretProviderClass
+        run: kubectl apply -f k8s/secret-provider-class.yaml
+      # Apply non-sensitive application configuration first.
+      - name: Apply Kubernetes ConfigMap
+        run: kubectl apply -f k8s/configmap.yaml
+
+      # Apply the existing external LoadBalancer Service.
+      - name: Apply Kubernetes Service
+        run: kubectl apply -f k8s/service.yaml
+
+      # Generate the Deployment using the verified commit SHA image.
+      - name: Apply Kubernetes Deployment
         run: |
+          # Define the immutable image tag for this Git commit.
           IMAGE="learningstepsacr2026.azurecr.io/learningsteps-api:${GITHUB_SHA}"
 
-          kubectl set image deployment/learningsteps-api \
-            api="$IMAGE" \
-            --namespace learningsteps
+          # Replace the placeholder before applying the Deployment.
+          sed "s|:placeholder|:${GITHUB_SHA}|g" \
+            k8s/deployment.yaml > /tmp/deployment.yaml
 
+          # Apply the Deployment with the correct image.
+          kubectl apply -f /tmp/deployment.yaml
+
+      # Configure automatic pod scaling.
+      - name: Apply Kubernetes HPA
+        run: kubectl apply -f k8s/hpa.yaml
+
+      # Wait until the application rollout succeeds.
       - name: Verify deployment rollout
         run: |
           kubectl rollout status deployment/learningsteps-api \
             --namespace learningsteps \
             --timeout=180s
 
+      # Confirm that AKS is running the expected commit image.
       - name: Verify deployed image
         run: |
-          kubectl get deployment learningsteps-api \
+          IMAGE="learningstepsacr2026.azurecr.io/learningsteps-api:${GITHUB_SHA}"
+
+          ACTUAL_IMAGE=$(kubectl get deployment learningsteps-api \
             --namespace learningsteps \
-            -o jsonpath='{.spec.template.spec.containers[?(@.name=="api")].image}'
-          echo ""
+            -o jsonpath='{.spec.template.spec.containers[?(@.name=="api")].image}')
+
+          echo "Expected image: $IMAGE"
+          echo "Actual image:   $ACTUAL_IMAGE"
+
+          test "$ACTUAL_IMAGE" = "$IMAGE"

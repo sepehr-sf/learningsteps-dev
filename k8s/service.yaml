@@ -1,0 +1,26 @@
+
+# Expose the LearningSteps API through an Azure LoadBalancer.
+apiVersion: v1
+kind: Service
+
+metadata:
+  # Preserve the existing Service name.
+  name: learningsteps-api
+  namespace: learningsteps
+  labels:
+    app: learningsteps-api
+
+spec:
+  # Request an external Azure LoadBalancer.
+  type: LoadBalancer
+
+  # Route traffic only to LearningSteps API pods.
+  selector:
+    app: learningsteps-api
+
+  # Forward external traffic to the FastAPI container.
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8000
+      targetPort: 8000

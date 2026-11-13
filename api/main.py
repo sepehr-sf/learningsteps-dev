@@ -20,7 +20,11 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="LearningSteps API 🚀", description="A simple learning journal API for tracking daily work, struggles, and intentions")
 app.include_router(journal_router)
-
+# Kubernetes health-check endpoint.
+# Returns HTTP 200 when the FastAPI application is responsive.
+@app.get("/health", include_in_schema=False)
+def health():
+    return {"status": "healthy"}
 
 @app.get("/", include_in_schema=False)
 def root():

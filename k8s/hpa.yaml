@@ -1,0 +1,29 @@
+
+# Automatically scale LearningSteps API pods based on CPU utilization.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+
+metadata:
+  # Identify the autoscaler.
+  name: learningsteps-api-hpa
+  namespace: learningsteps
+
+spec:
+  # Set the minimum and maximum number of API pods.
+  minReplicas: 2
+  maxReplicas: 5
+
+  # Connect the autoscaler to the existing Deployment.
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: learningsteps-api
+
+  # Scale when average CPU utilization exceeds the target.
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

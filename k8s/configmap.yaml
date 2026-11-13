@@ -1,0 +1,16 @@
+
+# Non-sensitive configuration for the LearningSteps API.
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  # Identify the application configuration.
+  name: learningsteps-config
+  namespace: learningsteps
+
+data:
+  # Identify the deployment environment.
+  APP_ENV: "production"
+
+  # Configure application logging verbosity.
+  LOG_LEVEL: "INFO"
