@@ -1,13 +1,12 @@
 import logging
 import time
 
-from prometheus_client import Counter, Histogram, make_asgi_app
-from starlette.requests import Request
-
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
+from prometheus_client import Counter, Histogram, make_asgi_app
 from routers.journal_router import router as journal_router
+from starlette.requests import Request
 
 load_dotenv()
 
