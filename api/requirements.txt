@@ -5,3 +5,6 @@ aiohttp
 sqlalchemy
 psycopg2-binary
 asyncpg
+pytest
+httpx
+ruff
