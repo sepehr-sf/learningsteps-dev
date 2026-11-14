@@ -10,7 +10,12 @@ service:
   type: ClusterIP
 
 persistence:
-  enabled: false
+  enabled: true
+  type: pvc
+  storageClassName: managed-csi
+  accessModes:
+    - ReadWriteOnce
+  size: 2Gi
 
 resources:
   requests:
@@ -30,3 +35,14 @@ datasources:
         url: http://prometheus-server.monitoring.svc.cluster.local
         isDefault: true
         editable: true
+
+sidecar:
+  dashboards:
+    enabled: true
+    label: grafana_dashboard
+    labelValue: "1"
+    searchNamespace: monitoring
+    folder: /var/lib/grafana/dashboards/default
+    provider:
+      allowUiUpdates: true
+      foldersFromFilesStructure: false
